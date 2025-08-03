@@ -1,1 +1,27 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Styles */
+:root {
+    --surface-ground: #f8f9fa;
+    --surface-section: #ffffff;
+    --surface-card: #ffffff;
+    --surface-overlay: #ffffff;
+    --surface-border: #dee2e6;
+    --text-color: #495057;
+    --text-color-secondary: #6c757d;
+    --primary-color: #3B82F6;
+    --primary-lighter: #BFDBFE;
+    --primary-darker: #2563EB;
+    --font-family: Calibri, sans-serif;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--surface-ground);
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.p-component {
+    font-family: var(--font-family);
+}
