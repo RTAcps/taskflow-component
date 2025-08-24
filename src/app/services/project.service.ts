@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { Project, Task, TeamMember, TaskStatus } from '../models/project.model';
+import { StorageService } from './storage.service';
 
 @Injectable({
     providedIn: 'root'
@@ -9,9 +10,21 @@ export class ProjectService {
     private projectsSubject = new BehaviorSubject<Project[]>([]);
     projects$ = this.projectsSubject.asObservable();
 
-    constructor() {
-        // Inicializa com dados mock para desenvolvimento
-        this.loadMockData();
+    constructor(private storageService: StorageService) {
+        this.loadProjects();
+        // Se não tiver projetos, carrega dados mock
+        if (this.projectsSubject.value.length === 0) {
+            this.loadMockData();
+        }
+    }
+
+    private loadProjects() {
+        const projects = this.storageService.loadProjects();
+        this.projectsSubject.next(projects);
+    }
+
+    private saveProjects() {
+        this.storageService.saveProjects(this.projectsSubject.value);
     }
 
     // CRUD Operations
@@ -35,6 +48,7 @@ export class ProjectService {
         
         const currentProjects = this.projectsSubject.value;
         this.projectsSubject.next([...currentProjects, newProject]);
+        this.saveProjects();
     }
 
     updateProject(updatedProject: Project): void {
@@ -44,12 +58,14 @@ export class ProjectService {
         if (index !== -1) {
             projects[index] = updatedProject;
             this.projectsSubject.next([...projects]);
+            this.saveProjects();
         }
     }
 
     deleteProject(projectId: string): void {
         const projects = this.projectsSubject.value;
         this.projectsSubject.next(projects.filter(p => p.id !== projectId));
+        this.saveProjects();
     }
 
     // Task Operations
@@ -182,6 +198,79 @@ export class ProjectService {
     }
 
     private loadMockData(): void {
-        // Implementar dados mock para desenvolvimento
+        const mockProjects: Project[] = [
+            {
+                id: crypto.randomUUID(),
+                name: 'Website Redesign',
+                description: 'Redesign da página principal da empresa',
+                status: 'ACTIVE' as any,
+                startDate: new Date(2025, 5, 1),
+                createdBy: 'John Doe',
+                tasks: [
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Wireframes',
+                        description: 'Criar wireframes para todas as páginas',
+                        status: 'DONE' as any,
+                        priority: 'HIGH' as any,
+                        createdDate: new Date(),
+                        tags: ['design', 'ui']
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Desenvolvimento Frontend',
+                        description: 'Implementar HTML/CSS baseado nos wireframes',
+                        status: 'IN_PROGRESS' as any,
+                        priority: 'MEDIUM' as any,
+                        createdDate: new Date(),
+                        tags: ['frontend', 'development']
+                    }
+                ],
+                members: [
+                    {
+                        id: crypto.randomUUID(),
+                        name: 'Alice Johnson',
+                        email: 'alice@example.com',
+                        role: 'Designer'
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        name: 'Bob Smith',
+                        email: 'bob@example.com',
+                        role: 'Developer'
+                    }
+                ]
+            },
+            {
+                id: crypto.randomUUID(),
+                name: 'App Mobile',
+                description: 'Desenvolvimento de aplicativo móvel iOS/Android',
+                status: 'ON_HOLD' as any,
+                startDate: new Date(2025, 7, 15),
+                createdBy: 'Jane Smith',
+                tasks: [
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Prototipagem',
+                        description: 'Criar protótipos interativos',
+                        status: 'DONE' as any,
+                        priority: 'HIGH' as any,
+                        createdDate: new Date(),
+                        tags: ['design', 'prototype']
+                    }
+                ],
+                members: [
+                    {
+                        id: crypto.randomUUID(),
+                        name: 'Charlie Brown',
+                        email: 'charlie@example.com',
+                        role: 'Mobile Developer'
+                    }
+                ]
+            }
+        ];
+        
+        this.projectsSubject.next(mockProjects);
+        this.saveProjects();
     }
 }
