@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
-import { Project, Task, TeamMember, TaskStatus } from '../models/project.model';
+import { Project, Task, TeamMember, TaskStatus, ProjectStatus } from '../models/project.model';
 import { StorageService } from './storage.service';
 
 @Injectable({
@@ -12,7 +12,6 @@ export class ProjectService {
 
     constructor(private storageService: StorageService) {
         this.loadProjects();
-        // Se não tiver projetos, carrega dados mock
         if (this.projectsSubject.value.length === 0) {
             this.loadMockData();
         }
@@ -203,7 +202,7 @@ export class ProjectService {
                 id: crypto.randomUUID(),
                 name: 'Website Redesign',
                 description: 'Redesign da página principal da empresa',
-                status: 'ACTIVE' as any,
+                status: ProjectStatus.ACTIVE as any,
                 startDate: new Date(2025, 5, 1),
                 createdBy: 'John Doe',
                 tasks: [
@@ -245,7 +244,7 @@ export class ProjectService {
                 id: crypto.randomUUID(),
                 name: 'App Mobile',
                 description: 'Desenvolvimento de aplicativo móvel iOS/Android',
-                status: 'ON_HOLD' as any,
+                status: ProjectStatus.ON_HOLD as any,
                 startDate: new Date(2025, 7, 15),
                 createdBy: 'Jane Smith',
                 tasks: [

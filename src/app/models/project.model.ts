@@ -11,10 +11,10 @@ export interface Project {
 }
 
 export enum ProjectStatus {
-    ACTIVE = 'ACTIVE',
-    COMPLETED = 'COMPLETED',
-    ON_HOLD = 'ON_HOLD',
-    CANCELLED = 'CANCELLED'
+    ACTIVE = 'Ativo',
+    COMPLETED = 'Concluído',
+    ON_HOLD = 'Pausado',
+    CANCELLED = 'Cancelado'
 }
 
 export interface Task {
