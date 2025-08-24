@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { ShellNavigationService } from './services/shell-navigation.service';
+import { ThemeService } from './services/theme.service';
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule, RouterOutlet],
   template: `
-    <div class="app-container">
-      <!-- Header só aparece quando executando standalone (não na shell) -->
+    <div class="app-container" [class.dark-theme]="isDarkTheme">
       <div class="app-header" *ngIf="isStandalone">
         <h1 class="app-title">
           📁 Project Management
@@ -62,35 +64,62 @@ import { ShellNavigationService } from './services/shell-navigation.service';
       overflow-y: auto;
     }
     
-    /* Injetar estilos base quando estiver em modo embed (não standalone) */
-    :host-context(app-root) {
-      --primary-color: #3B82F6;
-      --primary-color-text: #ffffff;
-      --text-color: #495057;
-      --text-color-secondary: #6c757d;
-      --surface-ground: #F8F9FA;
-      --surface-card: #ffffff;
-      --border-radius: 12px;
+    /* Aplicar transições suaves para mudanças de tema */
+    :host {
+      transition: background-color var(--transition-speed, 0.3s),
+                  color var(--transition-speed, 0.3s),
+                  border-color var(--transition-speed, 0.3s);
+    }
+    
+    /* Tema compartilhado, agora usando variáveis CSS do arquivo themes.css */
+    :host-context(.dark-theme) .app-container {
+      background-color: var(--surface-ground);
+    }
+    
+    :host-context(.dark-theme) .app-header {
+      background-color: var(--surface-card);
+    }
+    
+    :host-context(.dark-theme) .app-title {
+      color: var(--primary-color);
+    }
+    
+    :host-context(.dark-theme) .app-description {
+      color: var(--text-color-secondary);
     }
   `]
 })
-export class AppComponent implements OnInit {
-  
-  // Detectar se está executando standalone ou na shell
+export class AppComponent implements OnInit, OnDestroy {
   isStandalone = true;
+  isDarkTheme = false;
+  private themeSubscription: Subscription | undefined;
 
   constructor(
-    // Injetar o serviço para inicializá-lo e configurar os event listeners
-    private shellNavigationService: ShellNavigationService
+    private readonly shellNavigationService: ShellNavigationService,
+    private readonly themeService: ThemeService
   ) {}
 
   ngOnInit() {
-    // Verificar se está sendo executado dentro de uma shell
-    // Se a URL contém localhost:4200 (shell) ou se há um parent frame
     this.isStandalone = window.location.port === '4201' && window.parent === window;
     
     console.log('TaskFlow Component - isStandalone:', this.isStandalone);
     console.log('Current port:', window.location.port);
     console.log('Has parent frame:', window.parent !== window);
+    
+    // Observar mudanças de tema
+    this.themeSubscription = this.themeService.theme$.subscribe(theme => {
+      console.log('Theme changed to:', theme);
+      this.isDarkTheme = theme === 'dark';
+      
+      // Atualizar classes no body
+      document.body.classList.remove('light-theme', 'dark-theme');
+      document.body.classList.add(`${theme}-theme`);
+    });
+  }
+  
+  ngOnDestroy() {
+    if (this.themeSubscription) {
+      this.themeSubscription.unsubscribe();
+    }
   }
 }

@@ -1,0 +1,141 @@
+/* 
+* Este arquivo define variáveis CSS para os temas claro e escuro
+*/
+
+/* Variáveis de tema comum */
+:root {
+  /* Cores primárias */
+  --primary-hue: 214;
+  --primary-saturation: 90%;
+  
+  /* Raios de borda */
+  --border-radius-sm: 4px;
+  --border-radius: 6px;
+  --border-radius-lg: 8px;
+  
+  /* Efeitos */
+  --transition-speed: 0.3s;
+}
+
+/* Tema claro (padrão) */
+:root,
+.light-theme {
+  /* Cores primárias */
+  --primary-color: hsl(var(--primary-hue), var(--primary-saturation), 60%);
+  --primary-color-light: hsl(var(--primary-hue), var(--primary-saturation), 70%);
+  --primary-color-dark: hsl(var(--primary-hue), var(--primary-saturation), 50%);
+  --primary-color-text: #ffffff;
+  
+  /* Cores de texto */
+  --text-color: #495057;
+  --text-color-secondary: #6c757d;
+  
+  /* Cores de superfície */
+  --surface-ground: #f8f9fa;
+  --surface-section: #ffffff;
+  --surface-card: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-border: #dee2e6;
+  
+  /* Cores de estado */
+  --success-color: #4caf50;
+  --info-color: #2196f3;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  
+  /* Cores de prioridade */
+  --priority-highest: #d32f2f;
+  --priority-high: #f44336;
+  --priority-medium: #ff9800;
+  --priority-low: #4caf50;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Tema escuro */
+.dark-theme {
+  /* Cores primárias */
+  --primary-color: hsl(var(--primary-hue), var(--primary-saturation), 60%);
+  --primary-color-light: hsl(var(--primary-hue), var(--primary-saturation), 70%);
+  --primary-color-dark: hsl(var(--primary-hue), var(--primary-saturation), 50%);
+  --primary-color-text: #ffffff;
+  
+  /* Cores de texto */
+  --text-color: #e5e7eb;
+  --text-color-secondary: #9ca3af;
+  
+  /* Cores de superfície */
+  --surface-ground: #121212;
+  --surface-section: #1e1e1e;
+  --surface-card: #262626;
+  --surface-overlay: #262626;
+  --surface-border: #404040;
+  
+  /* Cores de estado */
+  --success-color: #66bb6a;
+  --info-color: #42a5f5;
+  --warning-color: #ffa726;
+  --error-color: #ef5350;
+  
+  /* Cores de prioridade */
+  --priority-highest: #ef5350;
+  --priority-high: #f44336;
+  --priority-medium: #ffa726;
+  --priority-low: #66bb6a;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow: 0 3px 6px rgba(0,0,0,0.25);
+  --shadow-lg: 0 5px 12px rgba(0,0,0,0.35);
+}
+
+/* Personalizações para o SweetAlert2 no tema escuro */
+body.dark-theme .swal2-popup,
+.dark-theme .swal2-popup {
+  background-color: var(--surface-overlay);
+  color: var(--text-color);
+}
+
+body.dark-theme .swal2-title,
+body.dark-theme .swal2-html-container,
+.dark-theme .swal2-title,
+.dark-theme .swal2-html-container {
+  color: var(--text-color);
+}
+
+body.dark-theme .swal2-input,
+body.dark-theme .swal2-textarea,
+.dark-theme .swal2-input,
+.dark-theme .swal2-textarea {
+  background-color: var(--surface-section);
+  color: var(--text-color);
+  border-color: var(--surface-border);
+}
+
+/* Garantir visibilidade dos botões do SweetAlert2 em qualquer tema */
+.swal2-actions button {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ajustar o contraste dos botões no modo escuro */
+body.dark-theme .swal2-confirm,
+.dark-theme .swal2-confirm {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+body.dark-theme .swal2-cancel,
+.dark-theme .swal2-cancel {
+  background-color: #6B7280 !important;
+  color: #ffffff !important;
+}
+
+/* Corrigir o hover nos botões */
+.swal2-actions button:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}

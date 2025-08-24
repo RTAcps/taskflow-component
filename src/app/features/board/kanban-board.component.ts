@@ -552,6 +552,27 @@ export class KanbanBoardComponent implements OnInit {
         // Tentamos carregar o projeto algumas vezes em caso de demora na inicialização
         let attempts = 0;
         const maxAttempts = 3;
+        const maxLoadTime = 60000; // 1 minuto de tempo máximo de carregamento
+        
+        // Limpar qualquer timeout anterior se existir
+        if (this._loadingTimeout) {
+            clearTimeout(this._loadingTimeout);
+        }
+        
+        // Configurar um timeout para redirecionar se demorar muito
+        this._loadingTimeout = setTimeout(() => {
+            console.error('[KanbanBoard] Tempo de carregamento esgotado após 60 segundos');
+            reportErrorToShell(
+                'O projeto está demorando muito para carregar. Você será redirecionado para a página inicial.',
+                'error',
+                true, // redirecionar para home
+                8000,  // timeout em ms
+                'Tempo Esgotado'
+            );
+            // Cancelar futuras tentativas
+            attempts = maxAttempts;
+        }, maxLoadTime);
+        
         const attemptLoadProject = () => {
             // Verificar todos os projetos primeiro para debugging
             this.projectService.getProjects().subscribe(allProjects => {
@@ -575,6 +596,12 @@ export class KanbanBoardComponent implements OnInit {
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                     next: (project) => {
+                        // Limpar o timeout já que recebemos resposta
+                        if (this._loadingTimeout) {
+                            clearTimeout(this._loadingTimeout);
+                            this._loadingTimeout = null;
+                        }
+                        
                         if (project) {
                             console.log('[KanbanBoard] Projeto carregado com sucesso:', project.name, project.id);
                             console.log('[KanbanBoard] Tarefas encontradas:', project.tasks?.length || 0);
@@ -603,17 +630,30 @@ export class KanbanBoardComponent implements OnInit {
                                 setTimeout(attemptLoadProject, 500);
                             } else {
                                 // Após várias tentativas sem sucesso, notificar o usuário
-                                reportErrorToShell(`Não foi possível carregar o projeto. O projeto com ID ${this.projectId} não foi encontrado ou está inacessível.`, 'error');
-                                // Redirecionar para a lista de projetos
-                                this.goBack();
+                                reportErrorToShell(
+                                    `Não foi possível carregar o projeto. O projeto com ID ${this.projectId} não foi encontrado ou está inacessível.`, 
+                                    'error',
+                                    true,  // redirecionar para home
+                                    5000,  // timeout de 5s
+                                    'Projeto não encontrado'
+                                );
                             }
                         }
                     },
                     error: (err) => {
+                        // Limpar o timeout já que recebemos resposta (mesmo sendo erro)
+                        if (this._loadingTimeout) {
+                            clearTimeout(this._loadingTimeout);
+                            this._loadingTimeout = null;
+                        }
+                        
                         console.error('[KanbanBoard] Erro ao carregar o projeto:', err);
-                        reportErrorToShell('Ocorreu um erro ao carregar o projeto. Por favor, tente novamente.', 'error');
-                        // Redirecionar para a lista de projetos
-                        setTimeout(() => this.goBack(), 2000);
+                        reportErrorToShell(
+                            'Ocorreu um erro ao carregar o projeto. Você será redirecionado para a página inicial.',
+                            'error',
+                            true,  // redirecionar para home
+                            5000   // timeout de 5s
+                        );
                     }
                 });
         };
@@ -949,8 +989,14 @@ export class KanbanBoardComponent implements OnInit {
         } catch (error) {
             console.error('[KanbanBoard] Erro ao adicionar/editar tarefa:', error);
             
-            // Usar notificação do shell em vez de alert
-            reportErrorToShell('Ocorreu um erro ao processar a tarefa. Por favor, tente novamente.', 'error');
+            // Usar notificação do shell com SweetAlert2
+            reportErrorToShell(
+                'Ocorreu um erro ao processar a tarefa. Por favor, tente novamente.', 
+                'error',
+                false,  // Não redirecionar para home
+                0,      // Sem timeout
+                'Erro ao Salvar'
+            );
             
             // Fechar o modal mesmo com erro
             setTimeout(() => this.closeModal(), 1000);
@@ -960,5 +1006,14 @@ export class KanbanBoardComponent implements OnInit {
     ngOnDestroy() {
         this.destroy$.next();
         this.destroy$.complete();
+        
+        // Garantir que qualquer timeout pendente seja cancelado
+        if (this._loadingTimeout) {
+            clearTimeout(this._loadingTimeout);
+            this._loadingTimeout = null;
+        }
     }
+    
+    // Propriedade para armazenar referência ao timeout de carregamento
+    private _loadingTimeout: any = null;
 }

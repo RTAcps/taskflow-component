@@ -2,15 +2,19 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { Project, Task, TeamMember, TaskStatus, ProjectStatus, TaskPriority } from '../models/project.model';
 import { StorageService } from './storage.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ProjectService {
-    private projectsSubject = new BehaviorSubject<Project[]>([]);
+    private readonly projectsSubject = new BehaviorSubject<Project[]>([]);
     projects$ = this.projectsSubject.asObservable();
 
-    constructor(private storageService: StorageService) {
+    constructor(
+        private readonly storageService: StorageService,
+        private readonly notificationService: NotificationService
+    ) {
         console.log('ProjectService inicializado');
         this.loadProjects();
         if (this.projectsSubject.value.length === 0) {
@@ -60,6 +64,12 @@ export class ProjectService {
         const currentProjects = this.projectsSubject.value;
         this.projectsSubject.next([...currentProjects, newProject]);
         this.saveProjects();
+        
+        // Notificar o usuário
+        this.notificationService.success(
+            `O projeto "${project.name}" foi criado com sucesso.`,
+            'Projeto Criado'
+        );
     }
 
     updateProject(updatedProject: Project): void {
@@ -67,16 +77,34 @@ export class ProjectService {
         const index = projects.findIndex(p => p.id === updatedProject.id);
         
         if (index !== -1) {
+            const oldProject = projects[index];
             projects[index] = updatedProject;
             this.projectsSubject.next([...projects]);
             this.saveProjects();
+            
+            // Notificar o usuário
+            this.notificationService.success(
+                `O projeto "${updatedProject.name}" foi atualizado com sucesso.`,
+                'Projeto Atualizado'
+            );
         }
     }
 
     deleteProject(projectId: string): void {
         const projects = this.projectsSubject.value;
-        this.projectsSubject.next(projects.filter(p => p.id !== projectId));
-        this.saveProjects();
+        const projectToDelete = projects.find(p => p.id === projectId);
+        
+        if (projectToDelete) {
+            const projectName = projectToDelete.name;
+            this.projectsSubject.next(projects.filter(p => p.id !== projectId));
+            this.saveProjects();
+            
+            // Notificar o usuário
+            this.notificationService.success(
+                `O projeto "${projectName}" foi excluído com sucesso.`,
+                'Projeto Excluído'
+            );
+        }
     }
 
     // Task Operations
@@ -110,8 +138,18 @@ export class ProjectService {
             
             console.log(`Tarefa "${task.title}" adicionada ao projeto "${project.name}"`);
             console.log('Total de tarefas agora:', project.tasks.length);
+            
+            // Notificar o usuário
+            this.notificationService.success(
+                `A tarefa "${task.title}" foi adicionada ao projeto "${project.name}".`,
+                'Tarefa Adicionada'
+            );
         } else {
             console.error(`Projeto com ID ${projectId} não encontrado`);
+            this.notificationService.error(
+                `Não foi possível adicionar a tarefa. Projeto não encontrado.`,
+                'Erro'
+            );
         }
     }
 
@@ -120,13 +158,48 @@ export class ProjectService {
         const project = projects.find(p => p.id === projectId);
         
         if (project) {
+            // Garantir que o status é um valor válido do enum
+            const validStatus = Object.values(TaskStatus).includes(updatedTask.status) 
+                ? updatedTask.status 
+                : TaskStatus.TODO;
+            
+            // Garantir que a prioridade é um valor válido do enum
+            const validPriority = Object.values(TaskPriority).includes(updatedTask.priority as TaskPriority)
+                ? updatedTask.priority
+                : TaskPriority.MEDIUM;
+            
+            // Atualizar tarefa com valores validados
+            const taskWithValidValues: Task = {
+                ...updatedTask,
+                status: validStatus,
+                priority: validPriority as TaskPriority
+            };
+            
             const taskIndex = project.tasks.findIndex(t => t.id === updatedTask.id);
             if (taskIndex !== -1) {
-                project.tasks[taskIndex] = updatedTask;
+                project.tasks[taskIndex] = taskWithValidValues;
                 this.projectsSubject.next([...projects]);
                 this.saveProjects(); // Salvar as alterações
                 console.log(`Tarefa "${updatedTask.title}" atualizada no projeto "${project.name}"`);
+                
+                // Notificar o usuário
+                this.notificationService.success(
+                    `A tarefa "${updatedTask.title}" foi atualizada com sucesso.`,
+                    'Tarefa Atualizada'
+                );
+            } else {
+                console.error(`Tarefa com ID ${updatedTask.id} não encontrada no projeto ${project.name}`);
+                this.notificationService.error(
+                    `Tarefa não encontrada no projeto "${project.name}".`,
+                    'Erro'
+                );
             }
+        } else {
+            console.error(`Projeto com ID ${projectId} não encontrado`);
+            this.notificationService.error(
+                `Não foi possível atualizar a tarefa. Projeto não encontrado.`,
+                'Erro'
+            );
         }
     }
 
@@ -135,8 +208,30 @@ export class ProjectService {
         const project = projects.find(p => p.id === projectId);
         
         if (project) {
-            project.tasks = project.tasks.filter(t => t.id !== taskId);
-            this.projectsSubject.next([...projects]);
+            const taskToDelete = project.tasks.find(t => t.id === taskId);
+            if (taskToDelete) {
+                const taskTitle = taskToDelete.title;
+                project.tasks = project.tasks.filter(t => t.id !== taskId);
+                this.projectsSubject.next([...projects]);
+                this.saveProjects(); // Salvar as alterações
+                
+                // Notificar o usuário
+                this.notificationService.success(
+                    `A tarefa "${taskTitle}" foi excluída do projeto "${project.name}".`,
+                    'Tarefa Excluída'
+                );
+            } else {
+                this.notificationService.error(
+                    `Tarefa não encontrada no projeto "${project.name}".`,
+                    'Erro'
+                );
+            }
+        } else {
+            console.error(`Projeto com ID ${projectId} não encontrado`);
+            this.notificationService.error(
+                `Não foi possível excluir a tarefa. Projeto não encontrado.`,
+                'Erro'
+            );
         }
     }
 
@@ -145,9 +240,29 @@ export class ProjectService {
         const projects = this.projectsSubject.value;
         const project = projects.find(p => p.id === projectId);
         
-        if (project && !project.members.find(m => m.id === member.id)) {
-            project.members = [...project.members, member];
-            this.projectsSubject.next([...projects]);
+        if (project) {
+            if (!project.members.find(m => m.id === member.id)) {
+                project.members = [...project.members, member];
+                this.projectsSubject.next([...projects]);
+                this.saveProjects(); // Salvar as alterações
+                
+                // Notificar o usuário
+                this.notificationService.success(
+                    `${member.name} foi adicionado(a) à equipe do projeto "${project.name}".`,
+                    'Membro Adicionado'
+                );
+            } else {
+                this.notificationService.warn(
+                    `${member.name} já faz parte da equipe do projeto "${project.name}".`,
+                    'Atenção'
+                );
+            }
+        } else {
+            console.error(`Projeto com ID ${projectId} não encontrado`);
+            this.notificationService.error(
+                `Não foi possível adicionar o membro. Projeto não encontrado.`,
+                'Erro'
+            );
         }
     }
 
@@ -156,15 +271,40 @@ export class ProjectService {
         const project = projects.find(p => p.id === projectId);
         
         if (project) {
-            project.members = project.members.filter(m => m.id !== memberId);
-            // Também remove o membro de todas as tasks atribuídas
-            project.tasks = project.tasks.map(task => {
-                if (task.assignee?.id === memberId) {
-                    return { ...task, assignee: undefined };
-                }
-                return task;
-            });
-            this.projectsSubject.next([...projects]);
+            const memberToRemove = project.members.find(m => m.id === memberId);
+            if (memberToRemove) {
+                const memberName = memberToRemove.name;
+                
+                project.members = project.members.filter(m => m.id !== memberId);
+                
+                // Também remove o membro de todas as tasks atribuídas
+                project.tasks = project.tasks.map(task => {
+                    if (task.assignee?.id === memberId) {
+                        return { ...task, assignee: undefined };
+                    }
+                    return task;
+                });
+                
+                this.projectsSubject.next([...projects]);
+                this.saveProjects(); // Salvar as alterações
+                
+                // Notificar o usuário
+                this.notificationService.success(
+                    `${memberName} foi removido(a) da equipe do projeto "${project.name}".`,
+                    'Membro Removido'
+                );
+            } else {
+                this.notificationService.error(
+                    `Membro não encontrado na equipe do projeto "${project.name}".`,
+                    'Erro'
+                );
+            }
+        } else {
+            console.error(`Projeto com ID ${projectId} não encontrado`);
+            this.notificationService.error(
+                `Não foi possível remover o membro. Projeto não encontrado.`,
+                'Erro'
+            );
         }
     }
 

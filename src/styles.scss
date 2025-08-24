@@ -7,6 +7,10 @@
 /* Estilos específicos para a versão standalone */
 @import './styles-standalone.css';
 
+/* Importar temas claro e escuro */
+@import './assets/styles/themes.css';
+@import './assets/styles/sweetalert.css';
+
 // Custom theme setup
 @include mat.core();
 
