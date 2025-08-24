@@ -4,7 +4,7 @@ Conjunto de componentes e serviços Angular voltados a Gestão de Projetos (task
 
 [![Angular](https://img.shields.io/badge/Angular-19-dd0031?logo=angular&logoColor=white)](#)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#licença)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](#licença)
 
 ## Sumário
 - [Visão Geral](#visão-geral)
@@ -44,7 +44,6 @@ npm install
 ```
 
 ## Scripts Disponíveis
-Baseado no package.json:
 
 - Desenvolvimento (serve na porta 4201):
   - `pnpm start` → `ng serve --port 4201`
