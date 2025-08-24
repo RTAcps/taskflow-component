@@ -37,35 +37,35 @@ Clone o repositório e instale as dependências:
 git clone https://github.com/RTAcps/taskflow-component.git
 cd taskflow-component
 
-# Instalação com npm (padrão do projeto)
-npm install
-# ou, se preferir, pnpm (necessário para o script "clean")
+# Instalação com pnpm (padrão do projeto, necessário para o script "clean")
 pnpm install
+# ou, se preferir, npm 
+npm install
 ```
 
 ## Scripts Disponíveis
 Baseado no package.json:
 
 - Desenvolvimento (serve na porta 4201):
-  - `npm run start` → `ng serve --port 4201`
-  - `npm run start:clean` → limpa caches locais e inicia em 4201
+  - `pnpm start` → `ng serve --port 4201`
+  - `pnpm start:clean` → limpa caches locais e inicia em 4201
 - Builds:
-  - `npm run build` → build padrão (dev)
-  - `npm run build:prod` → build com `--configuration production`
-  - `npm run watch` → build contínuo em desenvolvimento
+  - `pnpm build` → build padrão (dev)
+  - `pnpm build:prod` → build com `--configuration production`
+  - `pnpm watch` → build contínuo em desenvolvimento
 - Testes:
-  - `npm test` → `ng test`
+  - `pnpm test` → `ng test`
 - Limpeza:
-  - `npm run clean` → remove dist, caches, node_modules, limpa cache npm/ng e executa `pnpm install`
+  - `pnpm clean` → remove dist, caches, node_modules, limpa cache npm/ng e executa `pnpm install`
     - Observação: requer pnpm instalado globalmente ou use `npx pnpm install`
-  - `npm run clean:local` → remove dist e cache do Angular local
+  - `pnpm clean:local` → remove dist e cache do Angular local
 
-Dica: use `npm run` para listar todos os scripts disponíveis.
+Dica: use `npm run ou pnpm` para listar todos os scripts disponíveis.
 
 ## Desenvolvimento (MFE Remote)
 Suba o remote localmente:
 ```bash
-npm run start
+pnpm start
 # Servirá em: http://localhost:4201
 ```
 
