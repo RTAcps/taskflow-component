@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ProjectListComponent } from './features/project/project-list.component';
+import { ProjectFormComponent } from './features/project/project-form/project-form.component';
 import { KanbanBoardComponent } from './features/board/kanban-board.component';
 
 export const routes: Routes = [
@@ -16,10 +17,17 @@ export const routes: Routes = [
                 component: ProjectListComponent
             },
             {
+                path: 'projects/new',
+                component: ProjectFormComponent
+            },
+            {
+                path: 'projects/edit/:id',
+                component: ProjectFormComponent
+            },
+            {
                 path: 'projects/:id/board',
                 component: KanbanBoardComponent
             }
-            // Adicionar outras rotas conforme necessário
         ]
     }
 ];
