@@ -26,6 +26,7 @@ export interface Task {
     assignee?: TeamMember;
     dueDate?: Date;
     createdDate: Date;
+    updatedAt?: Date;
     tags: string[];
 }
 

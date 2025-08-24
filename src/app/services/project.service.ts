@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
-import { Project, Task, TeamMember, TaskStatus, ProjectStatus } from '../models/project.model';
+import { Project, Task, TeamMember, TaskStatus, ProjectStatus, TaskPriority } from '../models/project.model';
 import { StorageService } from './storage.service';
 
 @Injectable({
@@ -11,9 +11,13 @@ export class ProjectService {
     projects$ = this.projectsSubject.asObservable();
 
     constructor(private storageService: StorageService) {
+        console.log('ProjectService inicializado');
         this.loadProjects();
         if (this.projectsSubject.value.length === 0) {
+            console.log('Nenhum projeto encontrado, carregando dados de exemplo');
             this.loadMockData();
+        } else {
+            console.log('Projetos carregados:', this.projectsSubject.value.length);
         }
     }
 
@@ -32,8 +36,16 @@ export class ProjectService {
     }
 
     getProjectById(id: string): Observable<Project | undefined> {
+        console.log('Buscando projeto por ID:', id);
         return this.projects$.pipe(
-            map(projects => projects.find(p => p.id === id))
+            map(projects => {
+                const project = projects.find(p => p.id === id);
+                console.log('Projeto encontrado?', !!project);
+                if (project) {
+                    console.log(`Projeto ${project.name} tem ${project.tasks?.length || 0} tarefas`);
+                }
+                return project;
+            })
         );
     }
 
@@ -68,18 +80,38 @@ export class ProjectService {
     }
 
     // Task Operations
-    addTask(projectId: string, task: Omit<Task, 'id'>): void {
+    addTask(projectId: string, task: Task): void {
         const projects = this.projectsSubject.value;
         const project = projects.find(p => p.id === projectId);
         
         if (project) {
+            // Garantir que o status é um valor válido do enum
+            const validStatus = Object.values(TaskStatus).includes(task.status) 
+                ? task.status 
+                : TaskStatus.TODO;
+            
+            // Garantir que a prioridade é um valor válido do enum
+            const validPriority = Object.values(TaskPriority).includes(task.priority as TaskPriority)
+                ? task.priority
+                : TaskPriority.MEDIUM;
+            
+            // Criar uma nova tarefa com valores validados
             const newTask: Task = {
                 ...task,
-                id: crypto.randomUUID(),
+                status: validStatus,
+                priority: validPriority as TaskPriority
             };
+            
+            console.log('Adicionando tarefa ao projeto:', newTask);
             
             project.tasks = [...project.tasks, newTask];
             this.projectsSubject.next([...projects]);
+            this.saveProjects(); // Salvar as alterações
+            
+            console.log(`Tarefa "${task.title}" adicionada ao projeto "${project.name}"`);
+            console.log('Total de tarefas agora:', project.tasks.length);
+        } else {
+            console.error(`Projeto com ID ${projectId} não encontrado`);
         }
     }
 
@@ -92,6 +124,8 @@ export class ProjectService {
             if (taskIndex !== -1) {
                 project.tasks[taskIndex] = updatedTask;
                 this.projectsSubject.next([...projects]);
+                this.saveProjects(); // Salvar as alterações
+                console.log(`Tarefa "${updatedTask.title}" atualizada no projeto "${project.name}"`);
             }
         }
     }
@@ -210,19 +244,55 @@ export class ProjectService {
                         id: crypto.randomUUID(),
                         title: 'Wireframes',
                         description: 'Criar wireframes para todas as páginas',
-                        status: 'DONE' as any,
-                        priority: 'HIGH' as any,
-                        createdDate: new Date(),
+                        status: TaskStatus.DONE,
+                        priority: TaskPriority.HIGH,
+                        createdDate: new Date(2025, 5, 5),
                         tags: ['design', 'ui']
                     },
                     {
                         id: crypto.randomUUID(),
                         title: 'Desenvolvimento Frontend',
                         description: 'Implementar HTML/CSS baseado nos wireframes',
-                        status: 'IN_PROGRESS' as any,
-                        priority: 'MEDIUM' as any,
-                        createdDate: new Date(),
+                        status: TaskStatus.IN_PROGRESS,
+                        priority: TaskPriority.MEDIUM,
+                        createdDate: new Date(2025, 5, 10),
                         tags: ['frontend', 'development']
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Design de Componentes',
+                        description: 'Criar biblioteca de componentes reutilizáveis',
+                        status: TaskStatus.TODO,
+                        priority: TaskPriority.MEDIUM,
+                        createdDate: new Date(2025, 5, 15),
+                        tags: ['components', 'ui']
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Testes de Usabilidade',
+                        description: 'Conduzir testes de usabilidade com usuários',
+                        status: TaskStatus.BACKLOG,
+                        priority: TaskPriority.LOW,
+                        createdDate: new Date(2025, 6, 1),
+                        tags: ['testing', 'ux']
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'SEO Otimização',
+                        description: 'Implementar práticas de SEO no site',
+                        status: TaskStatus.BACKLOG,
+                        priority: TaskPriority.HIGH,
+                        createdDate: new Date(2025, 6, 5),
+                        tags: ['seo', 'marketing']
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: 'Revisão de Conteúdo',
+                        description: 'Revisar e atualizar o conteúdo do site',
+                        status: TaskStatus.REVIEW,
+                        priority: TaskPriority.MEDIUM,
+                        createdDate: new Date(2025, 5, 20),
+                        tags: ['content', 'copywriting']
                     }
                 ],
                 members: [
@@ -252,8 +322,8 @@ export class ProjectService {
                         id: crypto.randomUUID(),
                         title: 'Prototipagem',
                         description: 'Criar protótipos interativos',
-                        status: 'DONE' as any,
-                        priority: 'HIGH' as any,
+                        status: TaskStatus.DONE,
+                        priority: TaskPriority.HIGH,
                         createdDate: new Date(),
                         tags: ['design', 'prototype']
                     }
