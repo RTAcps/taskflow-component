@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Task, TaskPriority, TaskStatus } from '../../models/project.model';
 import { ProjectService } from '../../services/project.service';
+import { reportErrorToShell } from '../../utils/shell-communication';
 
 @Component({
     selector: 'app-kanban-board',
@@ -600,11 +601,19 @@ export class KanbanBoardComponent implements OnInit {
                             if (attempts < maxAttempts) {
                                 console.log(`[KanbanBoard] Tentativa ${attempts}/${maxAttempts} de carregar o projeto...`);
                                 setTimeout(attemptLoadProject, 500);
+                            } else {
+                                // Após várias tentativas sem sucesso, notificar o usuário
+                                reportErrorToShell(`Não foi possível carregar o projeto. O projeto com ID ${this.projectId} não foi encontrado ou está inacessível.`, 'error');
+                                // Redirecionar para a lista de projetos
+                                this.goBack();
                             }
                         }
                     },
                     error: (err) => {
                         console.error('[KanbanBoard] Erro ao carregar o projeto:', err);
+                        reportErrorToShell('Ocorreu um erro ao carregar o projeto. Por favor, tente novamente.', 'error');
+                        // Redirecionar para a lista de projetos
+                        setTimeout(() => this.goBack(), 2000);
                     }
                 });
         };
@@ -939,7 +948,12 @@ export class KanbanBoardComponent implements OnInit {
             }, 300);
         } catch (error) {
             console.error('[KanbanBoard] Erro ao adicionar/editar tarefa:', error);
-            alert('Ocorreu um erro ao processar a tarefa. Por favor, tente novamente.');
+            
+            // Usar notificação do shell em vez de alert
+            reportErrorToShell('Ocorreu um erro ao processar a tarefa. Por favor, tente novamente.', 'error');
+            
+            // Fechar o modal mesmo com erro
+            setTimeout(() => this.closeModal(), 1000);
         }
     }
     
