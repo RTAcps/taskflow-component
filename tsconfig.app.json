@@ -8,8 +8,9 @@
     "types": []
   },
   "include": [
-    "src/**/*.ts"
-, "src/app/app.component.ts"  ],
+    "src/**/*.ts", 
+    "src/app/app.component.ts"  
+  ],
   "files": [
     "src/main.ts"
   ],
