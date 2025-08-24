@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Estilos específicos para a versão standalone */
+@import './styles-standalone.css';
+
 // Custom theme setup
 @include mat.core();
 

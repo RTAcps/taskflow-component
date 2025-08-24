@@ -231,113 +231,129 @@ export class ProjectService {
     }
 
     private loadMockData(): void {
+        const makeTask = (t: Partial<Task>): Task => ({
+            id: t.id ?? crypto.randomUUID(),
+            title: t.title ?? 'Untitled',
+            description: t.description ?? '',
+            status: t.status ?? TaskStatus.TODO,
+            priority: t.priority ?? TaskPriority.MEDIUM,
+            createdDate: t.createdDate ?? new Date(),
+            tags: t.tags ?? [],
+            assignee: t.assignee,
+            dueDate: t.dueDate
+            // intentionally omit priorityColor; cast below to satisfy typing if needed
+        } as Task);
+
         const mockProjects: Project[] = [
             {
+            id: crypto.randomUUID(),
+            name: 'Website Redesign',
+            description: 'Redesign da página principal da empresa',
+            status: ProjectStatus.ACTIVE as any,
+            startDate: new Date(2025, 5, 1),
+            createdBy: 'John Doe',
+            tasks: [
+                makeTask({
                 id: crypto.randomUUID(),
-                name: 'Website Redesign',
-                description: 'Redesign da página principal da empresa',
-                status: ProjectStatus.ACTIVE as any,
-                startDate: new Date(2025, 5, 1),
-                createdBy: 'John Doe',
-                tasks: [
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Wireframes',
-                        description: 'Criar wireframes para todas as páginas',
-                        status: TaskStatus.DONE,
-                        priority: TaskPriority.HIGH,
-                        createdDate: new Date(2025, 5, 5),
-                        tags: ['design', 'ui']
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Desenvolvimento Frontend',
-                        description: 'Implementar HTML/CSS baseado nos wireframes',
-                        status: TaskStatus.IN_PROGRESS,
-                        priority: TaskPriority.MEDIUM,
-                        createdDate: new Date(2025, 5, 10),
-                        tags: ['frontend', 'development']
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Design de Componentes',
-                        description: 'Criar biblioteca de componentes reutilizáveis',
-                        status: TaskStatus.TODO,
-                        priority: TaskPriority.MEDIUM,
-                        createdDate: new Date(2025, 5, 15),
-                        tags: ['components', 'ui']
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Testes de Usabilidade',
-                        description: 'Conduzir testes de usabilidade com usuários',
-                        status: TaskStatus.BACKLOG,
-                        priority: TaskPriority.LOW,
-                        createdDate: new Date(2025, 6, 1),
-                        tags: ['testing', 'ux']
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'SEO Otimização',
-                        description: 'Implementar práticas de SEO no site',
-                        status: TaskStatus.BACKLOG,
-                        priority: TaskPriority.HIGH,
-                        createdDate: new Date(2025, 6, 5),
-                        tags: ['seo', 'marketing']
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Revisão de Conteúdo',
-                        description: 'Revisar e atualizar o conteúdo do site',
-                        status: TaskStatus.REVIEW,
-                        priority: TaskPriority.MEDIUM,
-                        createdDate: new Date(2025, 5, 20),
-                        tags: ['content', 'copywriting']
-                    }
-                ],
-                members: [
-                    {
-                        id: crypto.randomUUID(),
-                        name: 'Alice Johnson',
-                        email: 'alice@example.com',
-                        role: 'Designer'
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        name: 'Bob Smith',
-                        email: 'bob@example.com',
-                        role: 'Developer'
-                    }
-                ]
+                title: 'Wireframes',
+                description: 'Criar wireframes para todas as páginas',
+                status: TaskStatus.DONE,
+                priority: TaskPriority.HIGH,
+                createdDate: new Date(2025, 5, 5),
+                tags: ['design', 'ui']
+                }),
+                makeTask({
+                id: crypto.randomUUID(),
+                title: 'Desenvolvimento Frontend',
+                description: 'Implementar HTML/CSS baseado nos wireframes',
+                status: TaskStatus.IN_PROGRESS,
+                priority: TaskPriority.MEDIUM,
+                createdDate: new Date(2025, 5, 10),
+                tags: ['frontend', 'development']
+                }),
+                makeTask({
+                id: crypto.randomUUID(),
+                title: 'Design de Componentes',
+                description: 'Criar biblioteca de componentes reutilizáveis',
+                status: TaskStatus.TODO,
+                priority: TaskPriority.MEDIUM,
+                createdDate: new Date(2025, 5, 15),
+                tags: ['components', 'ui']
+                }),
+                makeTask({
+                id: crypto.randomUUID(),
+                title: 'Testes de Usabilidade',
+                description: 'Conduzir testes de usabilidade com usuários',
+                status: TaskStatus.BACKLOG,
+                priority: TaskPriority.LOW,
+                createdDate: new Date(2025, 6, 1),
+                tags: ['testing', 'ux']
+                }),
+                makeTask({
+                id: crypto.randomUUID(),
+                title: 'SEO Otimização',
+                description: 'Implementar práticas de SEO no site',
+                status: TaskStatus.BACKLOG,
+                priority: TaskPriority.HIGH,
+                createdDate: new Date(2025, 6, 5),
+                tags: ['seo', 'marketing']
+                }),
+                makeTask({
+                id: crypto.randomUUID(),
+                title: 'Revisão de Conteúdo',
+                description: 'Revisar e atualizar o conteúdo do site',
+                status: TaskStatus.REVIEW,
+                priority: TaskPriority.MEDIUM,
+                createdDate: new Date(2025, 5, 20),
+                tags: ['content', 'copywriting']
+                })
+            ] as Task[],
+            members: [
+                {
+                id: crypto.randomUUID(),
+                name: 'Alice Johnson',
+                email: 'alice@example.com',
+                role: 'Designer'
+                },
+                {
+                id: crypto.randomUUID(),
+                name: 'Bob Smith',
+                email: 'bob@example.com',
+                role: 'Developer'
+                }
+            ]
             },
             {
+            id: crypto.randomUUID(),
+            name: 'App Mobile',
+            description: 'Desenvolvimento de aplicativo móvel iOS/Android',
+            status: ProjectStatus.ON_HOLD as any,
+            startDate: new Date(2025, 7, 15),
+            createdBy: 'Jane Smith',
+            tasks: [
+                makeTask({
                 id: crypto.randomUUID(),
-                name: 'App Mobile',
-                description: 'Desenvolvimento de aplicativo móvel iOS/Android',
-                status: ProjectStatus.ON_HOLD as any,
-                startDate: new Date(2025, 7, 15),
-                createdBy: 'Jane Smith',
-                tasks: [
-                    {
-                        id: crypto.randomUUID(),
-                        title: 'Prototipagem',
-                        description: 'Criar protótipos interativos',
-                        status: TaskStatus.DONE,
-                        priority: TaskPriority.HIGH,
-                        createdDate: new Date(),
-                        tags: ['design', 'prototype']
-                    }
-                ],
-                members: [
-                    {
-                        id: crypto.randomUUID(),
-                        name: 'Charlie Brown',
-                        email: 'charlie@example.com',
-                        role: 'Mobile Developer'
-                    }
-                ]
+                title: 'Prototipagem',
+                description: 'Criar protótipos interativos',
+                status: TaskStatus.DONE,
+                priority: TaskPriority.HIGH,
+                createdDate: new Date(),
+                tags: ['design', 'prototype']
+                })
+            ] as Task[],
+            members: [
+                {
+                id: crypto.randomUUID(),
+                name: 'Charlie Brown',
+                email: 'charlie@example.com',
+                role: 'Mobile Developer'
+                }
+            ]
             }
         ];
+
+        this.projectsSubject.next(mockProjects);
+        this.saveProjects();
         
         this.projectsSubject.next(mockProjects);
         this.saveProjects();

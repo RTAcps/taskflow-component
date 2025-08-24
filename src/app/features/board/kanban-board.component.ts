@@ -12,7 +12,7 @@ import { ProjectService } from '../../services/project.service';
     selector: 'app-kanban-board',
     standalone: true,
     imports: [ CommonModule, DragDropModule, FormsModule ],
-    encapsulation: ViewEncapsulation.None,
+    encapsulation: ViewEncapsulation.Emulated,
     template: `
         <div class="kanban-board">
             <div class="header-container">
@@ -21,16 +21,16 @@ import { ProjectService } from '../../services/project.service';
                 </button>
                 <h2>Kanban Board - Projeto {{ projectName }}</h2>
                 
-                <button class="add-task-button" (click)="openNewTaskModal()">
+                <button class="add-task-button" (click)="openNewTaskModal($event)">
                     Nova Tarefa
                 </button>
             </div>
             
             <!-- Modal para adicionar nova tarefa -->
-            <div *ngIf="showNewTaskForm" class="modal-overlay">
-                <div class="modal-container" #modalContainer>
+            <div *ngIf="showNewTaskForm" class="modal-overlay" (click)="closeModal()">
+                <div class="modal-container" #modalContainer (click)="$event.stopPropagation()">
                     <div class="modal-header">
-                        <h3>Adicionar Nova Tarefa</h3>
+                        <h3>{{ editingTask ? 'Editar Tarefa' : 'Adicionar Nova Tarefa' }}</h3>
                         <button class="close-button" (click)="closeModal()">×</button>
                     </div>
                     <div class="modal-body">
@@ -60,17 +60,19 @@ import { ProjectService } from '../../services/project.service';
                             <div class="form-group">
                                 <label>Prioridade</label>
                                 <select [(ngModel)]="newTask.priority">
-                                    <option value="LOW">Baixa</option>
-                                    <option value="MEDIUM">Média</option>
-                                    <option value="HIGH">Alta</option>
-                                    <option value="URGENT">Urgente</option>
+                                    <option value="LOW">BAIXA</option>
+                                    <option value="MEDIUM">MÉDIA</option>
+                                    <option value="HIGH">ALTA</option>
+                                    <option value="URGENT">URGENTE</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button class="cancel-button" (click)="closeModal()">Cancelar</button>
-                        <button class="save-button" [disabled]="!newTask.title" (click)="addTask()">Adicionar Tarefa</button>
+                        <button class="save-button" [disabled]="!newTask.title" (click)="addTask()">
+                            {{ editingTask ? 'Salvar Alterações' : 'Adicionar Tarefa' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -95,6 +97,11 @@ import { ProjectService } from '../../services/project.service';
                             <div class="drag-handle" cdkDragHandle>
                                 <svg width="24px" height="24px" viewBox="0 0 24 24">
                                     <path fill="currentColor" d="M3,15H21V13H3V15M3,19H21V17H3V19M3,11H21V9H3V11M3,5V7H21V5H3Z" />
+                                </svg>
+                            </div>
+                            <div class="edit-button" (click)="openEditTaskModal(task, $event)">
+                                <svg width="16px" height="16px" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
                                 </svg>
                             </div>
                             <h4>{{ task.title }}</h4>
@@ -215,24 +222,20 @@ import { ProjectService } from '../../services/project.service';
             color: #000;
             font-weight: 500;
         }
-        .priority-urgent, 
-        :host ::ng-deep .priority-urgent {
-            background-color: var(--priority-highest, #d32f2f) !important;
+        .priority-urgent {
+            background-color: #d32f2f !important;
             color: white !important;
         }
-        .priority-high, 
-        :host ::ng-deep .priority-high {
-            background-color: var(--priority-high, #f44336) !important;
+        .priority-high {
+            background-color: #f44336 !important;
             color: white !important;
         }
-        .priority-medium, 
-        :host ::ng-deep .priority-medium {
-            background-color: var(--priority-medium, #ff9800) !important;
+        .priority-medium {
+            background-color: #ff9800 !important;
             color: #000 !important;
         }
-        .priority-low, 
-        :host ::ng-deep .priority-low {
-            background-color: var(--priority-low, #4caf50) !important;
+        .priority-low {
+            background-color: #4caf50 !important;
             color: white !important;
         }
         .assignee {
@@ -249,6 +252,25 @@ import { ProjectService } from '../../services/project.service';
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        .edit-button {
+            position: absolute;
+            top: 8px;
+            right: 36px;
+            color: #ccc;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .edit-button:hover {
+            color: var(--primary-color);
+            background-color: rgba(0, 0, 0, 0.05);
         }
         .task-preview {
             padding: 10px;
@@ -415,13 +437,16 @@ export class KanbanBoardComponent implements OnInit {
     // Nome do projeto atual
     projectName: string = '';
     
-    // Estados para o formulário de nova tarefa
+    // Estados para o formulário de tarefa
     showNewTaskForm = false;
+    editingTask: Task | null = null; // Indica se estamos editando uma tarefa existente
+    
+    // Objeto para armazenar os dados da tarefa em edição ou nova
     newTask: Partial<Task> = {
         title: '',
         description: '',
         status: TaskStatus.TODO,
-        priority: 'MEDIUM' as TaskPriority,
+        priority: TaskPriority.MEDIUM,
         tags: []
     };
     
@@ -729,83 +754,182 @@ export class KanbanBoardComponent implements OnInit {
     /**
      * Abre o modal para criar nova tarefa
      */
-    openNewTaskModal() {
-        this.showNewTaskForm = true;
-        document.body.style.overflow = 'hidden'; // Impede rolagem de fundo
+    openNewTaskModal(event?: MouseEvent) {
+        if (event) {
+            // Prevenir propagação e comportamento padrão
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        console.log('[KanbanBoard] Abrindo modal para nova tarefa');
+        
+        // Limpa o estado de edição para garantir que é uma nova tarefa
+        this.editingTask = null;
+        this.newTask = {
+            title: '',
+            description: '',
+            status: TaskStatus.TODO,
+            priority: TaskPriority.MEDIUM,
+            tags: []
+        };
+        
+        // Pequeno delay para garantir que o evento de clique não interfira
+        setTimeout(() => {
+            this.showNewTaskForm = true;
+            document.body.style.overflow = 'hidden'; // Impede rolagem de fundo
+        }, 10);
+    }
+    
+    /**
+     * Abre o modal para editar uma tarefa existente
+     */
+    openEditTaskModal(task: Task, event: MouseEvent) {
+        // Prevenir propagação para evitar que o evento seja capturado pelo card de tarefa
+        event.stopPropagation();
+        event.preventDefault();
+        
+        console.log('[KanbanBoard] Abrindo modal para editar tarefa:', task.id);
+        
+        // Define o estado de edição e popula o formulário com os dados da tarefa
+        this.editingTask = task;
+        this.newTask = {
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            priority: task.priority,
+            tags: task.tags || []
+        };
+        
+        // Pequeno delay para garantir que o evento de clique não interfira
+        setTimeout(() => {
+            this.showNewTaskForm = true;
+            document.body.style.overflow = 'hidden'; // Impede rolagem de fundo
+        }, 10);
     }
     
     /**
      * Fecha o modal
      */
-    closeModal() {
-        this.showNewTaskForm = false;
-        document.body.style.overflow = ''; // Restaura rolagem
+    closeModal(event?: MouseEvent) {
+        if (event) {
+            // Evita propagação do evento se for fornecido
+            event.preventDefault();
+            event.stopPropagation();
+        }
         
-        // Limpa o formulário
-        this.newTask = {
-            title: '',
-            description: '',
-            status: TaskStatus.TODO,
-            priority: 'MEDIUM' as TaskPriority,
-            tags: []
-        };
+        console.log('[KanbanBoard] Fechando modal');
+        
+        // Pequeno delay para evitar conflitos com outros eventos de clique
+        setTimeout(() => {
+            this.showNewTaskForm = false;
+            document.body.style.overflow = ''; // Restaura rolagem
+            
+            // Limpa o formulário e estado de edição
+            this.editingTask = null;
+            this.newTask = {
+                title: '',
+                description: '',
+                status: TaskStatus.TODO,
+                priority: TaskPriority.MEDIUM,
+                tags: []
+            };
+        }, 10);
     }
     
     /**
      * Trata cliques fora do modal para fechá-lo
+     * Usando document:click para capturar cliques em qualquer lugar
      */
-    @HostListener('click', ['$event'])
-    onOverlayClick(event: MouseEvent) {
-        // Se o clique foi fora do conteúdo do modal, feche-o
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent) {
+        // Verificar se o modal está aberto e se o clique foi fora dele
         if (this.showNewTaskForm && 
             this.modalContainer && 
-            !this.modalContainer.nativeElement.contains(event.target)) {
+            !this.modalContainer.nativeElement.contains(event.target) &&
+            !(event.target as HTMLElement).closest('.add-task-button')) {
+            console.log('[KanbanBoard] Clique detectado fora do modal, fechando...');
             this.closeModal();
         }
     }
     
     /**
-     * Adiciona uma nova tarefa ao projeto
+     * Previne a propagação de cliques dentro do modal
+     */
+    @HostListener('click', ['$event'])
+    onHostClick(event: MouseEvent) {
+        // Se o clique foi no botão de adicionar, previne a propagação
+        if ((event.target as HTMLElement).closest('.add-task-button')) {
+            event.stopPropagation();
+        }
+    }
+    
+    /**
+     * Adiciona ou atualiza uma tarefa no projeto
      */
     addTask() {
         if (!this.newTask.title) {
-            console.warn('[KanbanBoard] Tentativa de adicionar tarefa sem título');
+            console.warn('[KanbanBoard] Tentativa de adicionar/editar tarefa sem título');
             return;
         }
         
         if (!this.projectId) {
-            console.error('[KanbanBoard] Erro: tentativa de adicionar tarefa sem ID do projeto');
-            alert('Erro: Não foi possível identificar o projeto para adicionar a tarefa.');
+            console.error('[KanbanBoard] Erro: tentativa de adicionar/editar tarefa sem ID do projeto');
+            alert('Erro: Não foi possível identificar o projeto para adicionar/editar a tarefa.');
             return;
         }
         
-        console.log('[KanbanBoard] Criando nova tarefa:', this.newTask);
-        console.log('[KanbanBoard] Para o projeto ID:', this.projectId);
-        
-        const taskData: Task = {
-            id: crypto.randomUUID(),
-            title: this.newTask.title,
-            description: this.newTask.description || '',
-            status: this.newTask.status || TaskStatus.TODO,
-            priority: this.newTask.priority as TaskPriority || TaskPriority.MEDIUM,
-            createdDate: new Date(),
-            tags: this.newTask.tags || []
-        };
-        
-        console.log('[KanbanBoard] Nova tarefa criada:', taskData);
-        
         try {
-            // Adicionar a tarefa ao projeto
-            this.projectService.addTask(this.projectId, taskData);
-            
-            console.log('[KanbanBoard] Tarefa adicionada ao projeto, atualizando visualização...');
-            
-            // Imediatamente adiciona à visualização local também
-            this.tasksByStatus[taskData.status].push(taskData);
+            if (this.editingTask) {
+                // Estamos editando uma tarefa existente
+                console.log('[KanbanBoard] Atualizando tarefa existente:', this.editingTask.id);
+                
+                const updatedTask: Task = {
+                    ...this.editingTask,
+                    title: this.newTask.title || this.editingTask.title,
+                    description: this.newTask.description || this.editingTask.description,
+                    status: this.newTask.status || this.editingTask.status,
+                    priority: this.newTask.priority as TaskPriority || this.editingTask.priority,
+                    updatedAt: new Date()
+                };
+                
+                console.log('[KanbanBoard] Tarefa atualizada:', updatedTask);
+                
+                // Atualizar a tarefa no projeto
+                this.projectService.updateTask(this.projectId, updatedTask);
+                
+                // Atualizar visualmente
+                const statusKey = updatedTask.status;
+                const taskIndex = this.tasksByStatus[statusKey].findIndex(t => t.id === updatedTask.id);
+                if (taskIndex !== -1) {
+                    this.tasksByStatus[statusKey][taskIndex] = updatedTask;
+                }
+            } else {
+                // Estamos criando uma nova tarefa
+                console.log('[KanbanBoard] Criando nova tarefa:', this.newTask);
+                console.log('[KanbanBoard] Para o projeto ID:', this.projectId);
+                
+                const taskData: Task = {
+                    id: crypto.randomUUID(),
+                    title: this.newTask.title,
+                    description: this.newTask.description || '',
+                    status: this.newTask.status || TaskStatus.TODO,
+                    priority: this.newTask.priority as TaskPriority || TaskPriority.MEDIUM,
+                    createdDate: new Date(),
+                    tags: this.newTask.tags || []
+                };
+                
+                console.log('[KanbanBoard] Nova tarefa criada:', taskData);
+                
+                // Adicionar a tarefa ao projeto
+                this.projectService.addTask(this.projectId, taskData);
+                
+                // Imediatamente adiciona à visualização local também
+                this.tasksByStatus[taskData.status].push(taskData);
+            }
             
             // Pequena espera para garantir que os dados foram salvos
             setTimeout(() => {
-                console.log('[KanbanBoard] Recarregando tarefas após adição...');
+                console.log('[KanbanBoard] Recarregando tarefas após adição/edição...');
                 
                 // Recarregar as tarefas do projeto para garantir sincronização
                 this.loadTasks();
@@ -814,11 +938,11 @@ export class KanbanBoardComponent implements OnInit {
                 this.closeModal();
             }, 300);
         } catch (error) {
-            console.error('[KanbanBoard] Erro ao adicionar tarefa:', error);
-            alert('Ocorreu um erro ao adicionar a tarefa. Por favor, tente novamente.');
+            console.error('[KanbanBoard] Erro ao adicionar/editar tarefa:', error);
+            alert('Ocorreu um erro ao processar a tarefa. Por favor, tente novamente.');
         }
     }
-
+    
     ngOnDestroy() {
         this.destroy$.next();
         this.destroy$.complete();
