@@ -1,10 +1,18 @@
 const { withModuleFederationPlugin, shareAll } = require('@angular-architects/module-federation/webpack');
 
-module.exports = withModuleFederationPlugin({
+const webpackConfig = {
   output: {
-    publicPath: "https://taskflow-component.netlify.app/"
+    publicPath: "https://taskflow-component.netlify.app/",
+    uniqueName: "taskflow-component"
   },
-  name: 'taskflowComponent',
+  optimization: {
+    runtimeChunk: false
+  }
+}
+
+module.exports = withModuleFederationPlugin({
+  ...webpackConfig,
+  name: 'taskflow-component',
   filename: 'remoteEntry.js',
   exposes: {
     './Module': './src/app/app.component.ts',
@@ -14,5 +22,5 @@ module.exports = withModuleFederationPlugin({
   shared: {
     ...shareAll({ singleton: true, strictVersion: false, requiredVersion: false, eager: false }),
   },
-  library: { type: 'var', name: 'taskflowComponent' },
+  library: { type: 'var', name: 'taskflow-component' },
 });
