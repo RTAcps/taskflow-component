@@ -8,21 +8,28 @@ const baseConfig = withModuleFederationPlugin({
     './Routes': './src/app/app.routes.ts',
     './ProjectListComponent': './src/app/features/project/project-list.component.ts'
   },
-
   shared: {
-    ...shareAll({ singleton: true, strictVersion: false, requiredVersion: false, eager: false }),
+    '@angular/core': { singleton: true, strictVersion: false, requiredVersion: 'auto', eager: true },
+    '@angular/common': { singleton: true, strictVersion: false, requiredVersion: 'auto', eager: true },
+    '@angular/common/http': { singleton: true, strictVersion: false, requiredVersion: 'auto', eager: true },
+    '@angular/router': { singleton: true, strictVersion: false, requiredVersion: 'auto', eager: true },
+    'rxjs': { singleton: true, strictVersion: false, requiredVersion: 'auto', eager: true },
+    ...shareAll({
+      singleton: true,
+      strictVersion: false,
+      requiredVersion: 'auto',
+      eager: false,
+    }),
   },
 });
 
 module.exports = {
   ...baseConfig,
-
   output: {
     ...baseConfig.output,
     publicPath: "https://taskflow-component.netlify.app/",
     uniqueName: "taskflow-component"
   },
-
   optimization: {
     ...baseConfig.optimization,
     runtimeChunk: false
